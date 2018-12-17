@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.sinapsisenergia.dataexplorer.analyser.FieldAnalyser;
+import com.sinapsisenergia.dataexplorer.model.FieldType;
 import com.sinapsisenergia.dataexplorer.model.FileField;
 import com.sinapsisenergia.dataexplorer.util.SinapsisUtil;
 
@@ -22,12 +23,12 @@ public class CsvDataMining {
 	private Map<Integer, FileField> fieldsInformationsMap;
 	private static final String RESULT_FILE_HEADER = "NOME ARQUIVO;CAMPO;TIPO;TOTAL NULOS;TOTAL COM DADOS;TOTAL VAZIOS;DOMINIO;EXEMPLO 1;EXEMPLO 2;EXEMPLO 3;EXEMPLO 4;EXEMPLO 5;EXEMPLO 6;EXEMPLO 7;EXEMPLO 8;EXEMPLO 9;EXEMPLO 10";
 	
-	public void analyzeData(String inputDirectoryName, String outputDirectoryPath) throws IOException {
+	public void analyzeData(String inputDirectory, String outputDirectory) throws IOException {
 		
 		//
 		// obtendo os arquivos de entrada (recursivamente em todos os subdiretorios do diretorio informado)
 		//
-		List<File> files = SinapsisUtil.listFiles(inputDirectoryName);
+		List<File> files = SinapsisUtil.listFiles(inputDirectory);
 		
 		int totalFiles = files.size();
 		System.out.println(totalFiles + " arquivos para processar.");
@@ -35,7 +36,7 @@ public class CsvDataMining {
 		//
 		// certificando que o diretorio onde o arquivo de resultado sera gerado existe
 		//
-		File resultDirectory = new File(outputDirectoryPath);
+		File resultDirectory = new File(outputDirectory);
 		if (!resultDirectory.exists()) {
 			resultDirectory.mkdirs();
 		}
@@ -43,7 +44,7 @@ public class CsvDataMining {
 		//
 		// criando o print writer para escrever o arquivo de resultado
 		//
-		pw = SinapsisUtil.createOutputStreamWriter(outputDirectoryPath);
+		pw = SinapsisUtil.createOutputStreamWriter(outputDirectory);
 		
 		//
 		// escreve o header do arquivo de resultado
@@ -53,12 +54,12 @@ public class CsvDataMining {
 		
 		int counter = 0;
 		for (File file : files) {
-			
 			System.out.println("Processando [" + ++counter + "/" + totalFiles + "] - [" + file.getName() + "]");
+			
 			//
 			// obtendo o nome do arquivo
 			//
-			String nomeArquivo = file.getName();
+			String fileName = file.getName();
 			
 			//
 			// abrindo conexao com o arquivo
@@ -94,35 +95,24 @@ public class CsvDataMining {
 			//
 			// iterando sobre cada campo para escrever a linha de cada
 			//
-			String fieldName;
-			String fieldType;
-			String resultLine;
-			String fieldExamples;
 			for (int fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
-				fieldName = fields[fieldIndex];
-				fieldType = analyzeFieldType(fieldIndex, sample);
+				FileField field = fieldsInformationsMap.get(fieldIndex);
+				field.setFileName(fileName);
+				field.setFieldName(fields[fieldIndex]);
+				field.setType(analyzeFieldType(fieldIndex, sample));
 				
-				if (fieldType.equalsIgnoreCase("TEXTO")) {
+				if (field.getType() == FieldType.TEXTO) {
 					if (isDominio(tenPercentSample, fieldIndex)) {
-						fieldsInformationsMap.get(fieldIndex).setDominio(true);
-						fieldExamples = getTenFirstDomainsV2(fieldIndex, file);
+						field.setDominio(true);
+						field.setFieldExamples(getTenFirstDomainsV2(fieldIndex, file));
 					} else {
-						fieldExamples = getFieldExamples(fieldIndex, sample);
+						field.setFieldExamples(getFieldExamples(fieldIndex, sample));
 					}
 				} else {
-					fieldExamples = getFieldExamples(fieldIndex, sample);
+					field.setFieldExamples(getFieldExamples(fieldIndex, sample));
 				}
 				
-				resultLine = buildResultLine(nomeArquivo, 
-						fieldName, 
-						fieldType, 
-						fieldExamples, 
-						fieldsInformationsMap.get(fieldIndex).getNumberOfNulls(), 
-						fieldsInformationsMap.get(fieldIndex).getNumberOfFilled(), 
-						fieldsInformationsMap.get(fieldIndex).getNumberOfEmptys(),
-						fieldsInformationsMap.get(fieldIndex).isDominio());
-				
-				pw.write(resultLine);
+				pw.write(field.toString());
 				pw.write("\n");
 			}
 			
@@ -274,6 +264,7 @@ public class CsvDataMining {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private String buildResultLine(String nomeArquivo, String fieldName, String fieldType, String fieldExamples, int nulls, int filleds, int emptys, boolean dominio) {
 		sb = new StringBuilder();
 		sb.append(nomeArquivo).
@@ -302,18 +293,18 @@ public class CsvDataMining {
 		return sample;
 	}
 
-	private String analyzeFieldType(int fieldIndex, List<String> sample) {
+	private FieldType analyzeFieldType(int fieldIndex, List<String> sample) {
 		
 		if (allFieldsAreNull(fieldIndex, sample)) {
-			return "NULO";
+			return FieldType.NULO;
 		} else if (allFieldsAreInteger(fieldIndex, sample)) {
-			return "INTEIRO";
+			return FieldType.INTEIRO;
 		} else if (allFieldsAreDouble(fieldIndex, sample)) {
-			return "REAL";
+			return FieldType.REAL;
 		} else if (allFieldsAreDate(fieldIndex, sample)) {
-			return "DATA";
+			return FieldType.DATA;
 		} else {
-			return "TEXTO";
+			return FieldType.TEXTO;
 		}
 	}
 

@@ -12,38 +12,64 @@ import com.sinapsisenergia.dataexplorer.exporter.CsvDataMining;
  * @version beta 1.1
  */
 public class Main {
+
+	private static String input;
+	private static String output;
 	
     public static void main( String[] args ) {
     	long start = System.nanoTime();
-    	Scanner teclado = new Scanner(System.in);
-    	CsvDataMining dataTransform = new CsvDataMining();
+    	
+    	//
+    	// exibe o menu de boas vindas e solicita o caminho dos arquivos e o caminho onde o arquivo de resultado deve ser gravado
+    	//
+    	printWelcome();
+    	
+    	System.out.println("Iniciando...");
+    	
+    	//
+    	// normalizando o input do usuario
+    	//
+    	normalizeUserInput(input, output);
+    	
+    	try {
+    		CsvDataMining dataTransform = new CsvDataMining();
+			dataTransform.analyzeData(input, output);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("Erro FATAL ao tentar processar os arquivos. O programa será encerrado.\nErro: " + e.getMessage());
+		}
+    	
+    	//
+    	// calcula o tempo de processamento total do programa e imprime o FIM
+    	//
+    	long elapsed = System.nanoTime() - start;
+    	printGoodbye(elapsed);
+    }
 
+	private static void normalizeUserInput(String input2, String output2) {
+		input = input.replaceAll("\\\\", "/").trim();
+    	output = output.replaceAll("\\\\", "/").trim();
+	}
+
+	private static void printGoodbye(long elapsed) {
+		System.out.println("==================================================================");
+    	System.out.println("=================== FIM! Obrigado por usar! ======================");
     	System.out.println("==================================================================");
+    	System.out.println("Elapsed time: " + TimeUnit.NANOSECONDS.toSeconds(elapsed) + " segundos.");
+	}
+
+	private static void printWelcome() {
+		Scanner scan = new Scanner(System.in);
+		System.out.println("==================================================================");
     	System.out.println("====================== CSV Data Explorer =========================");
     	System.out.println("==================================================================");
     	System.out.println("");
     	System.out.println("Digite o caminho completo do diretorio onde se encontram os arquivos a processar: ");
-    	String input = teclado.next() + teclado.nextLine();
+    	System.out.print("--> ");
+    	input = scan.next() + scan.nextLine();
     	System.out.println("Digite o caminho completo do diretorio onde voce deseja que o arquivo de resultado seja salvo: ");
-    	String output = teclado.next() + teclado.nextLine();
-    	System.out.println("Iniciando...");
-    	
-    	input = input.replaceAll("\\\\", "/");
-    	output = output.replaceAll("\\\\", "/");
-    	teclado.close();
-    	
-    	try {
-			dataTransform.analyzeData(input, output);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.out.println("Erro FATAL ao tentar processar os arquivos. O programa será encerrado.");
-		}
-    	
-    	long elapsed = System.nanoTime() - start;
-    	System.out.println("==================================================================");
-    	System.out.println("=================== FIM! Obrigado por usar! ======================");
-    	System.out.println("==================================================================");
-    	System.out.println("Elapsed time: " + TimeUnit.NANOSECONDS.toSeconds(elapsed) + " segundos.");
-    }
+    	output = scan.next() + scan.nextLine();
+    	scan.close();
+	}
     
 }
