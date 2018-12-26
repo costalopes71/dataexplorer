@@ -1,8 +1,9 @@
 package com.sinapsisenergia.dataexplorer;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 import com.sinapsisenergia.dataexplorer.exporter.CsvDataMining;
 
@@ -17,7 +18,8 @@ public class Main {
 	private static String output;
 	
     public static void main( String[] args ) {
-    	long start = System.nanoTime();
+    	Instant start = Instant.now();
+//    	long start = System.nanoTime();
     	
     	//
     	// exibe o menu de boas vindas e solicita o caminho dos arquivos e o caminho onde o arquivo de resultado deve ser gravado
@@ -42,8 +44,8 @@ public class Main {
     	//
     	// calcula o tempo de processamento total do programa e imprime o FIM
     	//
-    	long elapsed = System.nanoTime() - start;
-    	printGoodbye(elapsed);
+    	Instant end = Instant.now();
+    	printGoodbye(Duration.between(start, end).toSeconds());
     }
 
 	private static void normalizeUserInput(String input2, String output2) {
@@ -55,7 +57,7 @@ public class Main {
 		System.out.println("==================================================================");
     	System.out.println("=================== FIM! Obrigado por usar! ======================");
     	System.out.println("==================================================================");
-    	System.out.println("Elapsed time: " + TimeUnit.NANOSECONDS.toSeconds(elapsed) + " segundos.");
+    	System.out.println("Elapsed time: " + elapsed + " segundos.");
 	}
 
 	private static void printWelcome() {
